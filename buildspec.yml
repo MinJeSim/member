@@ -2,7 +2,7 @@ version: 0.2
 
 env:
   variables:
-    _PROJECT_NAME: "member"
+    _PROJECT_NAME: "skccuser10-member"
 
 phases:
   install:
