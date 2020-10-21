@@ -39,24 +39,31 @@ public class Member {
 
     @PostPersist
     public void onPostPersist() {
-        if (this.getMemberStatus().equals("READY")) {
-            MemberJoined memberJoined = new MemberJoined();
-            BeanUtils.copyProperties(this, memberJoined);
-            memberJoined.setMemberStatus("READY");
-            memberJoined.publishAfterCommit();
-        } else if (this.getMemberStatus().equals("WITHDRAWN")) {
-            mileage.external.Forfeiture forfeiture = new mileage.external.Forfeiture();
-            forfeiture.setId(memberId);
-            forfeiture.setRemainPoint(0L);
+        switch (this.getMemberStatus()) {
+            case "READY":
+                MemberJoined memberJoined = new MemberJoined();
+                BeanUtils.copyProperties(this, memberJoined);
+                memberJoined.setMemberStatus("READY");
+                memberJoined.publishAfterCommit();
 
-            MemberApplication.applicationContext.getBean(mileage.external.ForfeitureService.class).forfeitHstInsert(forfeiture);
-        } else if (this.getMemberStatus().equals("INQUIRING")) {
-            InquirySent inquirySent = new InquirySent();
-            BeanUtils.copyProperties(this, inquirySent);
-            inquirySent.setMemberId(this.getMemberId());
-            inquirySent.setInquiryContents("TEST");
+                break;
+            case "WITHDRAWN":
+                mileage.external.Forfeiture forfeiture = new mileage.external.Forfeiture();
+                forfeiture.setId(memberId);
+                forfeiture.setRemainPoint(0L);
 
-            inquirySent.publishAfterCommit();
+                MemberApplication.applicationContext.getBean(mileage.external.ForfeitureService.class).forfeitHstInsert(forfeiture);
+
+                break;
+            case "INQUIRING":
+                InquirySent inquirySent = new InquirySent();
+
+                BeanUtils.copyProperties(this, inquirySent);
+                inquirySent.setMemberId(this.getMemberId());
+                inquirySent.setInquiryContents("DO TEST");
+
+                inquirySent.publishAfterCommit();
+                break;
         }
     }
 
