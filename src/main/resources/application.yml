@@ -70,9 +70,3 @@ spring:
 api:
   point:
     url: http://localhost:8083
-    
-hystrix:
-  command:
-    # 전역설정
-    default:
-      execution.isolation.thread.timeoutInMilliseconds: 610

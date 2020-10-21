@@ -16,6 +16,21 @@ public class Member {
     private String nickname;
     private String memberStatus;
 
+    @PrePersist
+    public void onPrePersist(){
+        InquiryCancel inquiryCancel = new InquiryCancel();
+        BeanUtils.copyProperties(this, inquiryCancel);
+        inquiryCancel.publishAfterCommit();
+
+        //Following code causes dependency to external APIs
+        // it is NOT A GOOD PRACTICE. instead, Event-Policy mapping is recommended.
+
+        mileage.external.Inquiry inquiry = new mileage.external.Inquiry();
+        // mappings goes here
+        MemberApplication.applicationContext.getBean(mileage.external.InquiryService.class)
+                .cancelInquiry(inquiry);
+    }
+
     @PostPersist
     public void onPostPersist(){
         MemberJoined memberJoined = new MemberJoined();
@@ -31,6 +46,11 @@ public class Member {
         System.out.println(forfeiture.getMemberId());
 
         MemberApplication.applicationContext.getBean(mileage.external.ForfeitureService.class).forfeitHstInsert(forfeiture);
+
+
+        InquirySent inquirySent = new InquirySent();
+        BeanUtils.copyProperties(this, inquirySent);
+        inquirySent.publishAfterCommit();
 
     }
 
