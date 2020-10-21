@@ -1,15 +1,17 @@
 package mileage;
 
 import javax.persistence.*;
+
 import org.springframework.beans.BeanUtils;
+
 import java.util.List;
 
 @Entity
-@Table(name="Member_table")
+@Table(name = "Member_table")
 public class Member {
 
     @Id
-    @GeneratedValue(strategy=GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
     private Long memberId;
     private String phoneNo;
@@ -17,52 +19,56 @@ public class Member {
     private String memberStatus;
 
     @PrePersist
-    public void onPrePersist(){
-        InquiryCancel inquiryCancel = new InquiryCancel();
-        BeanUtils.copyProperties(this, inquiryCancel);
-        inquiryCancel.publishAfterCommit();
+    public void onPrePersist() {
+        if (this.getMemberStatus().equals("CANCEL")) {
+            InquiryCancel inquiryCancel = new InquiryCancel();
+            BeanUtils.copyProperties(this, inquiryCancel);
+            inquiryCancel.publishAfterCommit();
 
-        //Following code causes dependency to external APIs
-        // it is NOT A GOOD PRACTICE. instead, Event-Policy mapping is recommended.
+            //Following code causes dependency to external APIs
+            // it is NOT A GOOD PRACTICE. instead, Event-Policy mapping is recommended.
 
-        mileage.external.Inquiry inquiry = new mileage.external.Inquiry();
-        // mappings goes here
-        MemberApplication.applicationContext.getBean(mileage.external.InquiryService.class)
-                .cancelInquiry(inquiry);
+            mileage.external.Inquiry inquiry = new mileage.external.Inquiry();
+            // mappings goes here
+            inquiry.setMemberId(this.getMemberId());
+            inquiry.setInquiryStatus("CANCEL");
+
+            MemberApplication.applicationContext.getBean(mileage.external.InquiryService.class).cancelInquiry(inquiry);
+        }
     }
 
     @PostPersist
-    public void onPostPersist(){
-        MemberJoined memberJoined = new MemberJoined();
-        BeanUtils.copyProperties(this, memberJoined);
+    public void onPostPersist() {
+        if (this.getMemberStatus().equals("READY")) {
+            MemberJoined memberJoined = new MemberJoined();
+            BeanUtils.copyProperties(this, memberJoined);
+            memberJoined.setMemberStatus("READY");
+            memberJoined.publishAfterCommit();
+        } else if (this.getMemberStatus().equals("WITHDRAWN")) {
+            mileage.external.Forfeiture forfeiture = new mileage.external.Forfeiture();
+            forfeiture.setId(memberId);
+            forfeiture.setRemainPoint(0L);
 
-        memberJoined.setMemberStatus("READY");
-        memberJoined.publishAfterCommit();
+            MemberApplication.applicationContext.getBean(mileage.external.ForfeitureService.class).forfeitHstInsert(forfeiture);
+        } else if (this.getMemberStatus().equals("INQUIRING")) {
+            InquirySent inquirySent = new InquirySent();
+            BeanUtils.copyProperties(this, inquirySent);
+            inquirySent.setMemberId(this.getMemberId());
+            inquirySent.setInquiryContents("TEST");
 
-        mileage.external.Forfeiture forfeiture = new mileage.external.Forfeiture();
-        forfeiture.setId(memberId);
-        forfeiture.setRemainPoint(0L);
-
-        System.out.println(forfeiture.getMemberId());
-
-        MemberApplication.applicationContext.getBean(mileage.external.ForfeitureService.class).forfeitHstInsert(forfeiture);
-
-
-        InquirySent inquirySent = new InquirySent();
-        BeanUtils.copyProperties(this, inquirySent);
-        inquirySent.publishAfterCommit();
-
+            inquirySent.publishAfterCommit();
+        }
     }
 
     @PostUpdate
-    public void onPostUpdate(){
+    public void onPostUpdate() {
         MemberStatusChanged memberStatusChanged = new MemberStatusChanged();
         BeanUtils.copyProperties(this, memberStatusChanged);
         memberStatusChanged.publishAfterCommit();
     }
 
     @PreRemove
-    public void onPreRemove(){
+    public void onPreRemove() {
         MemberWithdrawn memberWithdrawn = new MemberWithdrawn();
         BeanUtils.copyProperties(this, memberWithdrawn);
         memberWithdrawn.setMemberStatus("WITHDRAWAL");
@@ -88,6 +94,7 @@ public class Member {
     public void setId(Long id) {
         this.id = id;
     }
+
     public Long getMemberId() {
         return memberId;
     }
@@ -95,6 +102,7 @@ public class Member {
     public void setMemberId(Long memberId) {
         this.memberId = memberId;
     }
+
     public String getPhoneNo() {
         return phoneNo;
     }
@@ -102,6 +110,7 @@ public class Member {
     public void setPhoneNo(String phoneNo) {
         this.phoneNo = phoneNo;
     }
+
     public String getNickname() {
         return nickname;
     }
@@ -109,6 +118,7 @@ public class Member {
     public void setNickname(String nickname) {
         this.nickname = nickname;
     }
+
     public String getMemberStatus() {
         return memberStatus;
     }
@@ -116,8 +126,4 @@ public class Member {
     public void setMemberStatus(String memberStatus) {
         this.memberStatus = memberStatus;
     }
-
-
-
-
 }

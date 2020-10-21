@@ -5,7 +5,6 @@ public class Inquiry {
     private Long id;
     private Long memberId;
     private String inquiryStatus;
-    private Long inquiryId;
     private String inquiryContents;
 
     public Long getId() {
@@ -25,12 +24,6 @@ public class Inquiry {
     }
     public void setMemberId(Long memberId) {
         this.memberId = memberId;
-    }
-    public Long getInquiryId() {
-        return inquiryId;
-    }
-    public void setInquiryId(Long inquiryId) {
-        this.inquiryId = inquiryId;
     }
     public String getInquiryContents() {
         return inquiryContents;

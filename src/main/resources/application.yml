@@ -41,6 +41,8 @@ server:
 api :
   point :
     url : http://localhost:8083
+  inquiry:
+    url : http://localhost:8085
 
 ---
 
@@ -69,4 +71,13 @@ spring:
           contentType: application/json
 api:
   point:
-    url: http://localhost:8083
+    url: http://point:8080
+  inquiry:
+    url: http://inquiry:8080
+
+
+hystrix:
+  command:
+    # 전역설정
+    default:
+      execution.isolation.thread.timeoutInMilliseconds: 610
