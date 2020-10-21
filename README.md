@@ -476,7 +476,7 @@ hystrix:
 
 - 피호출 서비스(포인트:point) 의 임의 부하 처리 - 450 밀리에서 증감 230 밀리 정도 왔다갔다 하게
 ```
-# (point) Forfeiture.java (Entity)
+# (point) mileage.Forfeiture.java (Entity)
 
     @PrePersist
     public void onPrePersist(){

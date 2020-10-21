@@ -11,7 +11,7 @@ import java.util.Date;
 @FeignClient(name="inquiry", url="${api.inquiry.url}")
 public interface InquiryService {
 
-    @RequestMapping(method= RequestMethod.POST, path="/inquiries")
-    public void cancelInquiry(@RequestBody Inquiry inquiry);
+    @RequestMapping(method= RequestMethod.GET, path="/inquiryHsts")
+    public void cancel(@RequestBody InquiryHst inquiryHst);
 
 }

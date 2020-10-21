@@ -41,4 +41,20 @@ public class PolicyHandler{
             memberRepository.save(member);
         }
     }
+
+    @StreamListener(KafkaProcessor.INPUT)
+    public void wheneverReceiptInquiry_UpdateInquryStatus(@Payload ReceiptInquiry receiptInquiry){
+
+        if(receiptInquiry.isMe()){
+            System.out.println("##### listener UpdateInquryStatus : " + receiptInquiry.toJson());
+        }
+    }
+
+    @StreamListener(KafkaProcessor.INPUT)
+    public void wheneverCancelInquiry_UpdateInquryStatus(@Payload CancelInquiry cancelInquiry){
+
+        if(cancelInquiry.isMe()){
+            System.out.println("##### listener UpdateInquryStatus : " + cancelInquiry.toJson());
+        }
+    }
 }

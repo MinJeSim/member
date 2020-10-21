@@ -17,6 +17,7 @@ public class Member {
     private String phoneNo;
     private String nickname;
     private String memberStatus;
+    private String inquiryStatus;
 
     @PrePersist
     public void onPrePersist() {
@@ -28,12 +29,12 @@ public class Member {
             //Following code causes dependency to external APIs
             // it is NOT A GOOD PRACTICE. instead, Event-Policy mapping is recommended.
 
-            mileage.external.Inquiry inquiry = new mileage.external.Inquiry();
+            mileage.external.InquiryHst inquiryHst = new mileage.external.InquiryHst();
             // mappings goes here
-            inquiry.setMemberId(this.getMemberId());
-            inquiry.setInquiryStatus("CANCEL");
+            inquiryHst.setMemberId(this.getMemberId());
+            inquiryHst.setInquiryStatus("CANCEL");
 
-            MemberApplication.applicationContext.getBean(mileage.external.InquiryService.class).cancelInquiry(inquiry);
+            MemberApplication.applicationContext.getBean(mileage.external.InquiryService.class).cancel(inquiryHst);
         }
     }
 
@@ -69,9 +70,15 @@ public class Member {
 
     @PostUpdate
     public void onPostUpdate() {
-        MemberStatusChanged memberStatusChanged = new MemberStatusChanged();
-        BeanUtils.copyProperties(this, memberStatusChanged);
-        memberStatusChanged.publishAfterCommit();
+        if (this.inquiryStatus == null) {
+            MemberStatusChanged memberStatusChanged = new MemberStatusChanged();
+            BeanUtils.copyProperties(this, memberStatusChanged);
+            memberStatusChanged.publishAfterCommit();
+        } else {
+            InquiryStatusUpdated inquiryStatusUpdated = new InquiryStatusUpdated();
+            BeanUtils.copyProperties(this, inquiryStatusUpdated);
+            inquiryStatusUpdated.publishAfterCommit();
+        }
     }
 
     @PreRemove
@@ -132,5 +139,13 @@ public class Member {
 
     public void setMemberStatus(String memberStatus) {
         this.memberStatus = memberStatus;
+    }
+
+    public String getInquiryStatus() {
+        return inquiryStatus;
+    }
+
+    public void setInquiryStatus(String inquiryStatus) {
+        this.inquiryStatus = inquiryStatus;
     }
 }
