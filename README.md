@@ -1210,7 +1210,7 @@ public interface InquiryService {
 
 이력을 생성하는 기능이 장애가 나면 회원 상태변경도 처리 불가한 것을 확인
 
-  ![동기호출에러](https://user-images.githubusercontent.com/22702393/96824288-714e2380-1469-11eb-8805-35a7b34bb795.PNG)
+  ![reqresErr](https://user-images.githubusercontent.com/22702393/96824464-da359b80-1469-11eb-9097-d6207e912d04.PNG)
 
 ```
 
