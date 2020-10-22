@@ -47,6 +47,13 @@ public class PolicyHandler{
 
         if(receiptInquiry.isMe()){
             System.out.println("##### listener UpdateInquryStatus : " + receiptInquiry.toJson());
+
+            Optional<Member> memberOptional = memberRepository.findByMemberId(receiptInquiry.getMemberId());
+            Member member = memberOptional.get();
+
+            member.setInquiryStatus(receiptInquiry.getInquiryStatus());
+
+            memberRepository.save(member);
         }
     }
 
@@ -55,6 +62,13 @@ public class PolicyHandler{
 
         if(cancelInquiry.isMe()){
             System.out.println("##### listener UpdateInquryStatus : " + cancelInquiry.toJson());
+
+            Optional<Member> memberOptional = memberRepository.findByMemberId(cancelInquiry.getMemberId());
+            Member member = memberOptional.get();
+
+            member.setInquiryStatus(cancelInquiry.getInquiryStatus());
+
+            memberRepository.save(member);
         }
     }
 }

@@ -19,13 +19,55 @@ public class Member {
     private String memberStatus;
     private String inquiryStatus;
 
-    @PrePersist
-    public void onPrePersist() {
-        if (this.getMemberStatus().equals("CANCEL")) {
-            InquiryCancel inquiryCancel = new InquiryCancel();
-            BeanUtils.copyProperties(this, inquiryCancel);
-            inquiryCancel.publishAfterCommit();
+    @PostPersist
+    public void onPostPersist() {
 
+        if (this.getMemberStatus() != null) {
+            switch (this.getMemberStatus()) {
+                case "READY":
+                    MemberJoined memberJoined = new MemberJoined();
+                    BeanUtils.copyProperties(this, memberJoined);
+                    memberJoined.setMemberStatus("READY");
+                    memberJoined.publishAfterCommit();
+
+                    break;
+                case "WITHDRAWN":
+                    mileage.external.Forfeiture forfeiture = new mileage.external.Forfeiture();
+                    forfeiture.setId(memberId);
+                    forfeiture.setRemainPoint(0L);
+
+                    MemberApplication.applicationContext.getBean(mileage.external.ForfeitureService.class).forfeitHstInsert(forfeiture);
+
+                    break;
+                case "NORMAL":
+                default:
+                    if (this.getInquiryStatus() != null && (this.getInquiryStatus().equals("INQUIRING") || this.getInquiryStatus().equals("CANCEL"))) {
+                        InquirySent inquirySent = new InquirySent();
+
+                        BeanUtils.copyProperties(this, inquirySent);
+                        inquirySent.setMemberId(this.getMemberId());
+                        inquirySent.setInquiryContents("DO TEST");
+
+                        inquirySent.publishAfterCommit();
+                    }
+                    break;
+            }
+        } else {
+            if (this.getInquiryStatus() != null && (this.getInquiryStatus().equals("INQUIRING") || this.getInquiryStatus().equals("CANCEL"))) {
+                InquirySent inquirySent = new InquirySent();
+
+                BeanUtils.copyProperties(this, inquirySent);
+                inquirySent.setMemberId(this.getMemberId());
+                inquirySent.setInquiryContents("DO TEST");
+
+                inquirySent.publishAfterCommit();
+            }
+        }
+    }
+
+    @PreUpdate
+    public void onPreUpdate() {
+        if (this.getInquiryStatus() != null && this.getInquiryStatus().equals("CANCEL")) {
             //Following code causes dependency to external APIs
             // it is NOT A GOOD PRACTICE. instead, Event-Policy mapping is recommended.
 
@@ -34,37 +76,9 @@ public class Member {
             inquiryHst.setMemberId(this.getMemberId());
             inquiryHst.setInquiryStatus("CANCEL");
 
+            System.out.println("CANCEL");
+
             MemberApplication.applicationContext.getBean(mileage.external.InquiryService.class).cancel(inquiryHst);
-        }
-    }
-
-    @PostPersist
-    public void onPostPersist() {
-        switch (this.getMemberStatus()) {
-            case "READY":
-                MemberJoined memberJoined = new MemberJoined();
-                BeanUtils.copyProperties(this, memberJoined);
-                memberJoined.setMemberStatus("READY");
-                memberJoined.publishAfterCommit();
-
-                break;
-            case "WITHDRAWN":
-                mileage.external.Forfeiture forfeiture = new mileage.external.Forfeiture();
-                forfeiture.setId(memberId);
-                forfeiture.setRemainPoint(0L);
-
-                MemberApplication.applicationContext.getBean(mileage.external.ForfeitureService.class).forfeitHstInsert(forfeiture);
-
-                break;
-            case "INQUIRING":
-                InquirySent inquirySent = new InquirySent();
-
-                BeanUtils.copyProperties(this, inquirySent);
-                inquirySent.setMemberId(this.getMemberId());
-                inquirySent.setInquiryContents("DO TEST");
-
-                inquirySent.publishAfterCommit();
-                break;
         }
     }
 
