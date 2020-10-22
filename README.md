@@ -1298,6 +1298,11 @@ Shortest transaction:           0.43
 ```
 
 ## 오토스케일 아웃
+명령어 kubectl autoscale deploy inquiry --min=1 --max=10 --cpu-percent=2 으로 오토스케일 적용
+
+![autoscale_1](https://user-images.githubusercontent.com/22702393/96832193-571c4180-1479-11eb-9f2a-d384471c79da.PNG)
+![autoscale_2](https://user-images.githubusercontent.com/22702393/96832194-57b4d800-1479-11eb-8ab1-74cbe5c14010.PNG)
+![autoscale_3](https://user-images.githubusercontent.com/22702393/96832188-5683ab00-1479-11eb-943b-c8e379b3283b.PNG)
 
 ## 무정지 배포
 
