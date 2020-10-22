@@ -68,8 +68,8 @@ public class Member {
         }
     }
 
-    @PrePersist
-    public void onPrePersist() {
+    @PreUpdate
+    public void onPreUpdate() {
         if (this.getInquiryStatus() != null && this.getInquiryStatus().equals("CANCEL")) {
             //Following code causes dependency to external APIs
             // it is NOT A GOOD PRACTICE. instead, Event-Policy mapping is recommended.

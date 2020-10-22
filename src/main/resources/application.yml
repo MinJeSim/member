@@ -74,10 +74,3 @@ api:
     url: http://point:8080
   inquiry:
     url: http://inquiry:8080
-
-
-hystrix:
-  command:
-    # 전역설정
-    default:
-      execution.isolation.thread.timeoutInMilliseconds: 610
