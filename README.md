@@ -1209,10 +1209,10 @@ public interface InquiryService {
 이력을 생성 한 후 회원의 설문제출 상태를 변경
 
 이력을 생성하는 기능이 장애가 나면 회원 상태변경도 처리 불가한 것을 확인
-
+```
   ![reqresErr](https://user-images.githubusercontent.com/22702393/96824464-da359b80-1469-11eb-9097-d6207e912d04.PNG)
 
-```
+
 
 
 ## 비동기식 호출 / 시간적 디커플링 / 장애격리 / 최종 (Eventual) 일관성 테스트
