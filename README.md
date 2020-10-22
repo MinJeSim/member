@@ -1085,10 +1085,167 @@ transfer-encoding: chunked
     "remainPoint": 1500
 }
 root@labs--132893260:~#
-'''
+```
+
+
+# 신규 기능 추가
+
+
+기능적 요구사항
+1. 가입한 회원은 설문조사를 제출할 수 있다.
+1. 제출한 설문조사는 취소 가능하다. 
+1. 각 회원 당 한 건의 설문조사만 제출 가능하고, 설문조사를 이미 제출한 회원은 기존에 제출하였던 설문조사를 취소한 후 다시 제출해야 한다.
+
+비기능적 요구사항
+1. 트랜잭션
+    1. 제출한 설문조사를 취소한 이력 생성을 한 후 설문조사가 취소되어야 한다.( Sync 호출)
+    
+1. 장애격리
+    1. 설문조사 제출은 365일 24시간 받을 수 있어야 한다. Async (event-driven), Eventual Consistency
+    1. 설문조사 취소이력 저장기능이 과중되면 설문조사 취소를 잠시동안 받지 않고 잠시 후에 하도록 유도한다  Circuit breaker, fallback
+1. 성능
+    1. 설문조사 이력 확인 페이지에서 설문조사 상태 조회 가능하다.   CQRS
+    1. 설문조사가 제출/취소 될 때마다 제출한 회원의 상태를 변경한다.   Event driven
+
+## 이벤트 스토밍 
+    ![image](https://user-images.githubusercontent.com/487999/79685356-2b729180-8273-11ea-9361-a434065f2249.png)
+
+## DDD
+```
+@Entity
+@Table(name="Inquiry_table")
+public class Inquiry {
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    private Long id;
+    private Long memberId;
+    private String inquiryStatus;
+    private String inquiryContents;
+
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Long getMemberId() {
+        return memberId;
+    }
+
+    public void setMemberId(Long memberId) {
+        this.memberId = memberId;
+    }
+
+    public String getInquiryStatus() {
+        return inquiryStatus;
+    }
+
+    public void setInquiryStatus(String inquiryStatus) {
+        this.inquiryStatus = inquiryStatus;
+    }
+
+    public String getInquiryContents() {
+        return inquiryContents;
+    }
+
+    public void setInquiryContents(String inquiryContents) {
+        this.inquiryContents = inquiryContents;
+    }
+}
+
+
+```
+- Entity Pattern 과 Repository Pattern 을 적용하여 JPA 를 통하여 다양한 데이터소스 유형 (RDB or NoSQL) 에 대한 별도의 처리가 없도록 데이터 접근 어댑터를 자동 생성하기 위하여 Spring Data REST 의 RestRepository 를 적용하였다
+```
+package mileage;
+
+import org.springframework.data.repository.PagingAndSortingRepository;
+import java.util.Optional;
+
+public interface InquiryRepository extends PagingAndSortingRepository<Inquiry, Long>{
+    Optional<Inquiry> findByMemberId(Long memberId);
+}
+```
+  
+- 적용 후 REST API 의 테스트
+```
+# 설문 제출
+http POST http://localhost:8085/inquiries memberId=1 inquiryStatus=INQUIRING
+
+# 설문 취소
+http PATCH http://localhost:8081/members/1 inquiryStatus=CANCEL
+
+# 설문 정보 확인
+http GET http://localhost:8085/inquiries/1 
+
+```
+
+## 폴리글랏 퍼시스턴스
+현재 기존의프로젝트에서는 H2 DB, MariaDB를 사용 중인 상태며, 신규 추가한 inquiry에서는 새로운 DB인 HSQLDB를 적용하였다.
+```		
+<dependency>
+			<groupId>org.hsqldb</groupId>
+			<artifactId>hsqldb</artifactId>
+			<version>2.4.0</version>
+			<scope>runtime</scope>
+</dependency>
+```
+
+## 동기식 호출과 Fallback 처리
+설문조사 제출 취소시 이력을 생성하는 작업은 일관성을 유지하는 트랜잭션으로 처리하기로 하였다. 
+서비스를 호출하기 위하여 FeignClient를 이용하여 구현
+
+```		
+@FeignClient(name="inquiry", url="${api.inquiry.url}")
+public interface InquiryService {
+
+    @RequestMapping(method= RequestMethod.POST, path="/inquiryHsts")
+    public void cancel(@RequestBody InquiryHst inquiryHst);
+}
+
+이력을 생성 한 후 회원의 설문제출 상태를 변경
+
+이력을 생성하는 기능이 장애가 나면 회원 상태변경도 처리 불가한 것을 확인
+```
+  ![reqresErr](https://user-images.githubusercontent.com/22702393/96824464-da359b80-1469-11eb-9097-d6207e912d04.PNG)
 
 
 
 
+## 비동기식 호출 / 시간적 디커플링 / 장애격리 / 최종 (Eventual) 일관성 테스트
 
+설문을 제출하는 부분은 비동기적으로 구현
+```
+@Service
+public class PolicyHandler {
+    @Autowired
+    InquiryRepository inquiryRepository;
+
+    @StreamListener(KafkaProcessor.INPUT)
+    public void onStringEventListener(@Payload String eventString) {
+    }
+
+    @StreamListener(KafkaProcessor.INPUT)
+    public void wheneverInquirySent_SendInquiry(@Payload InquirySent inquirySent) {
+    }
+}
+```
+
+따라서 설문 시스템이 유지보수로 인해 잠시 내려간 후 다시 재부팅 되라도 그 동안 설문을 하는데 문제가 없다
+- 설문 제출 시간 2020.10.22. 13:35:10
+- 설문 접수 시간 2020.10.22. 13:36:25
+
+![pubsub_time](https://user-images.githubusercontent.com/22702393/96825263-ac515680-146b-11eb-9a61-6d366dbb2357.PNG)
+
+
+# 운영
+
+## 동기식 호출 / 서킷 브레이킹 / 장애격리
+
+## 오토스케일 아웃
+
+## 무정지 배포
 
