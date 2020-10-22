@@ -1217,6 +1217,31 @@ public interface InquiryService {
 
 ## 비동기식 호출 / 시간적 디커플링 / 장애격리 / 최종 (Eventual) 일관성 테스트
 
+설문을 제출하는 부분은 비동기적으로 구현
+```
+@Service
+public class PolicyHandler {
+    @Autowired
+    InquiryRepository inquiryRepository;
+
+    @StreamListener(KafkaProcessor.INPUT)
+    public void onStringEventListener(@Payload String eventString) {
+    }
+
+    @StreamListener(KafkaProcessor.INPUT)
+    public void wheneverInquirySent_SendInquiry(@Payload InquirySent inquirySent) {
+    }
+}
+```
+
+따라서 설문 시스템이 유지보수로 인해 잠시 내려간 상태라도 설문을 접수하는데 문제가 없다
+- 설문 제출 시간 2020.10.22. 13:35:10
+- 설문 접수 시간 2020.10.22. 13:36:25
+
+![pubsub_time](https://user-images.githubusercontent.com/22702393/96825263-ac515680-146b-11eb-9a61-6d366dbb2357.PNG)
+
+
+
 ## 구현  
 
 
