@@ -45,6 +45,7 @@ public class Member {
                         InquirySent inquirySent = new InquirySent();
 
                         BeanUtils.copyProperties(this, inquirySent);
+                        inquirySent.setInquiryStatus(this.inquiryStatus);
                         inquirySent.setMemberId(this.getMemberId());
                         inquirySent.setInquiryContents("DO TEST");
 
@@ -53,12 +54,14 @@ public class Member {
                     break;
             }
         } else {
+
             if (this.getInquiryStatus() != null && (this.getInquiryStatus().equals("INQUIRING") || this.getInquiryStatus().equals("CANCEL"))) {
                 InquirySent inquirySent = new InquirySent();
 
                 BeanUtils.copyProperties(this, inquirySent);
                 inquirySent.setMemberId(this.getMemberId());
                 inquirySent.setInquiryContents("DO TEST");
+                inquirySent.setInquiryStatus(this.inquiryStatus);
 
                 inquirySent.publishAfterCommit();
             }

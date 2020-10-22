@@ -61,7 +61,7 @@ public class PolicyHandler{
     public void wheneverCancelInquiry_UpdateInquryStatus(@Payload CancelInquiry cancelInquiry){
 
         if(cancelInquiry.isMe()){
-            System.out.println("##### listener UpdateInquryStatus : " + cancelInquiry.toJson());
+            System.out.println("##### listener CancelInquryStatus : " + cancelInquiry.toJson());
 
             Optional<Member> memberOptional = memberRepository.findByMemberId(cancelInquiry.getMemberId());
             Member member = memberOptional.get();
