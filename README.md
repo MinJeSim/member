@@ -1241,10 +1241,6 @@ public class PolicyHandler {
 ![pubsub_time](https://user-images.githubusercontent.com/22702393/96825263-ac515680-146b-11eb-9a61-6d366dbb2357.PNG)
 
 
-
-## 구현  
-
-
 # 운영
 
 ## 동기식 호출 / 서킷 브레이킹 / 장애격리
